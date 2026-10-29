@@ -25,7 +25,7 @@ export default function Sidebar({ page, setPage }: Props) {
       <div className="brand">
         <div className="brand-mark">
           <img
-            src="/Kyron_Logo.png"
+            src="../../Kyron_Logo.png"
             alt="Kyron Coach logo"
             height={50}
             width={50}
