@@ -19,8 +19,15 @@ type Props = {
 };
 
 const workoutCategories = [
-  "Technical", "Bag work", "Sparring", "Conditioning", "Strength",
-  "Mobility", "Recovery", "Roadwork", "Strategy",
+  "Technical",
+  "Bag work",
+  "Sparring",
+  "Conditioning",
+  "Strength",
+  "Mobility",
+  "Recovery",
+  "Roadwork",
+  "Strategy",
 ];
 
 export default function TrainingPage({
@@ -32,7 +39,7 @@ export default function TrainingPage({
 }: Props) {
   const [showWorkoutForm, setShowWorkoutForm] = useState(false);
   const [selectedAthleteIds, setSelectedAthleteIds] = useState<string[]>([]);
-  const [title, setTitle] = useState("");
+  const [title, setTitle] = useState(exerciseOptions[0]?.name ?? "");
   const [category, setCategory] = useState("Technical");
   const [date, setDate] = useState(dateString(0));
   const [time, setTime] = useState("17:00");
@@ -54,7 +61,7 @@ export default function TrainingPage({
 
   const resetForm = () => {
     setSelectedAthleteIds([]);
-    setTitle("");
+    setTitle(exerciseOptions[0]?.name ?? "");
     setCategory("Technical");
     setDate(dateString(0));
     setTime("17:00");
@@ -76,10 +83,12 @@ export default function TrainingPage({
     }
 
     const selectedCamp = camps.find((camp) => camp.id === campId);
+
     if (campId && !selectedCamp) {
       setError("The selected camp could not be found.");
       return;
     }
+
     if (
       selectedCamp &&
       selectedAthleteIds.some((id) => !selectedCamp.athleteIds.includes(id))
@@ -117,6 +126,7 @@ export default function TrainingPage({
     athletes.find((athlete) => athlete.id === id)?.name ?? "Removed athlete";
 
   const today = dateString(0);
+
   const todaySessions = sessions
     .filter((session) => session.date === today)
     .sort((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`));
@@ -128,14 +138,17 @@ export default function TrainingPage({
           <p className="eyebrow">TRAINING</p>
           <h1>Training</h1>
           <p className="muted">
-            Schedule workouts first. Completed sessions are added to athlete history.
+            Schedule workouts first. Completed sessions are added to athlete
+            history.
           </p>
         </div>
+
         <button
           className="primary-button"
           onClick={() => {
-            if (showWorkoutForm) resetForm();
-            else {
+            if (showWorkoutForm) {
+              resetForm();
+            } else {
               setSelectedAthleteIds(initialAthleteId ? [initialAthleteId] : []);
               setShowWorkoutForm(true);
             }
@@ -155,12 +168,15 @@ export default function TrainingPage({
       {showWorkoutForm && athletes.length > 0 && (
         <div className="form-card workout-log-form">
           <h2>Schedule workout</h2>
+
           <div className="form-grid">
             <div className="tracker-field">
               <span>Assign athletes</span>
+
               <div className="athlete-selector">
                 {athletes.map((athlete) => {
                   const selected = selectedAthleteIds.includes(athlete.id);
+
                   return (
                     <button
                       type="button"
@@ -183,64 +199,105 @@ export default function TrainingPage({
 
             <label className="tracker-field">
               Exercise
-              <select className="form-input" value={title}
+              <select
+                className="form-input"
+                value={title}
                 onChange={(event) => {
                   const exercise = exerciseOptions.find(
                     (item) => item.name === event.target.value,
                   );
+
                   setTitle(event.target.value);
-                  if (exercise) setCategory(exercise.category);
-                }}>
+
+                  if (exercise) {
+                    setCategory(exercise.category);
+                  }
+                }}
+              >
                 {exerciseOptions.map((exercise) => (
-                  <option key={exercise.name} value={exercise.name}>{exercise.name}</option>
+                  <option key={exercise.name} value={exercise.name}>
+                    {exercise.name}
+                  </option>
                 ))}
               </select>
             </label>
 
             <label className="tracker-field">
               Category
-              <select className="form-input" value={category}
-                onChange={(event) => setCategory(event.target.value)}>
-                {workoutCategories.map((item) => <option key={item}>{item}</option>)}
+              <select
+                className="form-input"
+                value={category}
+                onChange={(event) => setCategory(event.target.value)}
+              >
+                {workoutCategories.map((item) => (
+                  <option key={item}>{item}</option>
+                ))}
               </select>
             </label>
 
             <label className="tracker-field">
               Training camp
-              <select className="form-input" value={campId}
-                onChange={(event) => setCampId(event.target.value)}>
+              <select
+                className="form-input"
+                value={campId}
+                onChange={(event) => setCampId(event.target.value)}
+              >
                 <option value="">No camp</option>
                 {camps.map((camp) => (
-                  <option key={camp.id} value={camp.id}>{camp.name}</option>
+                  <option key={camp.id} value={camp.id}>
+                    {camp.name}
+                  </option>
                 ))}
               </select>
             </label>
 
             <label className="tracker-field">
               Workout date
-              <input className="form-input" type="date" value={date}
-                onChange={(event) => setDate(event.target.value)} required />
+              <input
+                className="form-input"
+                type="date"
+                value={date}
+                onChange={(event) => setDate(event.target.value)}
+                required
+              />
             </label>
 
             <label className="tracker-field">
               Workout time
-              <input className="form-input" type="time" value={time}
-                onChange={(event) => setTime(event.target.value)} required />
+              <input
+                className="form-input"
+                type="time"
+                value={time}
+                onChange={(event) => setTime(event.target.value)}
+                required
+              />
             </label>
           </div>
 
           <div className="tracker-field">
             <p>Tracking method</p>
-            <div className="workout-mode-toggle" role="group" aria-label="Workout tracking method">
-              {([
-                { value: "sets-reps", label: "Sets & Reps" },
-                { value: "time", label: "Time" },
-                { value: "both", label: "Both" },
-              ] as const).map((option) => (
-                <button type="button" key={option.value}
-                  className={`workout-mode-option ${mode === option.value ? "selected" : ""}`}
+
+            <div
+              className="workout-mode-toggle"
+              role="group"
+              aria-label="Workout tracking method"
+            >
+              {(
+                [
+                  { value: "sets-reps", label: "Sets & Reps" },
+                  { value: "time", label: "Time" },
+                  { value: "both", label: "Both" },
+                ] as const
+              ).map((option) => (
+                <button
+                  type="button"
+                  key={option.value}
+                  className={`workout-mode-option ${
+                    mode === option.value ? "selected" : ""
+                  }`}
                   aria-pressed={mode === option.value}
-                  onClick={() => setMode(option.value)}>
+                  onClick={() => setMode(option.value)}
+                >
                   {option.label}
                 </button>
               ))}
@@ -248,38 +305,85 @@ export default function TrainingPage({
           </div>
 
           <div className="form-grid">
-            {mode !== "time" && <>
-              <label className="tracker-field">Sets
-                <input className="form-input" type="number" min="1" value={sets}
-                  onChange={(event) => setSets(event.target.value)} />
-              </label>
-              <label className="tracker-field">Reps per set
-                <input className="form-input" type="number" min="1" value={reps}
-                  onChange={(event) => setReps(event.target.value)} />
-              </label>
-            </>}
-            {mode !== "sets-reps" && <>
-              <label className="tracker-field">Duration (minutes)
-                <input className="form-input" type="number" min="1" value={duration}
-                  onChange={(event) => setDuration(event.target.value)} />
-              </label>
-              <label className="tracker-field">Rounds
-                <input className="form-input" type="number" min="0" value={rounds}
-                  onChange={(event) => setRounds(event.target.value)} />
-              </label>
-            </>}
-            <label className="tracker-field">Notes
-              <input className="form-input" value={notes}
+            {mode !== "time" && (
+              <>
+                <label className="tracker-field">
+                  Sets
+                  <input
+                    className="form-input"
+                    type="number"
+                    min="1"
+                    value={sets}
+                    onChange={(event) => setSets(event.target.value)}
+                  />
+                </label>
+
+                <label className="tracker-field">
+                  Reps per set
+                  <input
+                    className="form-input"
+                    type="number"
+                    min="1"
+                    value={reps}
+                    onChange={(event) => setReps(event.target.value)}
+                  />
+                </label>
+              </>
+            )}
+
+            {mode !== "sets-reps" && (
+              <>
+                <label className="tracker-field">
+                  Duration (minutes)
+                  <input
+                    className="form-input"
+                    type="number"
+                    min="1"
+                    value={duration}
+                    onChange={(event) => setDuration(event.target.value)}
+                  />
+                </label>
+
+                <label className="tracker-field">
+                  Rounds
+                  <input
+                    className="form-input"
+                    type="number"
+                    min="0"
+                    value={rounds}
+                    onChange={(event) => setRounds(event.target.value)}
+                  />
+                </label>
+              </>
+            )}
+
+            <label className="tracker-field">
+              Notes
+              <input
+                className="form-input"
+                value={notes}
                 onChange={(event) => setNotes(event.target.value)}
-                placeholder="Optional notes" />
+                placeholder="Optional notes"
+              />
             </label>
           </div>
 
-          {error && <p className="muted" role="alert">{error}</p>}
+          {error && (
+            <p className="muted" role="alert">
+              {error}
+            </p>
+          )}
+
           <div className="form-actions">
-            <button className="secondary-button" onClick={resetForm}>Cancel</button>
-            <button className="primary-button" onClick={saveWorkout}
-              disabled={!selectedAthleteIds.length || !title.trim()}>
+            <button className="secondary-button" onClick={resetForm}>
+              Cancel
+            </button>
+
+            <button
+              className="primary-button"
+              onClick={saveWorkout}
+              disabled={!selectedAthleteIds.length || !title.trim()}
+            >
               Add to Schedule
             </button>
           </div>
@@ -290,9 +394,13 @@ export default function TrainingPage({
         <div className="section-header">
           <div>
             <h2>Today's scheduled workouts</h2>
-            <p className="muted">Only workouts scheduled for today are shown here. Full scheduling history is available in Schedule.</p>
+            <p className="muted">
+              Only workouts scheduled for today are shown here. Full scheduling
+              history is available in Schedule.
+            </p>
           </div>
         </div>
+
         {todaySessions.length === 0 ? (
           <div className="empty-state">No workouts scheduled for today.</div>
         ) : (
@@ -300,19 +408,25 @@ export default function TrainingPage({
             {todaySessions.map((session) => (
               <div className="workout-log-row" key={session.id}>
                 <strong>{session.title}</strong>
-                <span>{formatDate(session.date)} · {session.time} · {session.type}</span>
+                <span>
+                  {formatDate(session.date)} · {session.time} · {session.type}
+                </span>
                 <span>{session.athleteIds.map(athleteName).join(", ")}</span>
+
                 {session.campId && (
-                  <span>Camp: {camps.find((camp) => camp.id === session.campId)?.name ?? "Camp"}</span>
+                  <span>
+                    Camp:{" "}
+                    {camps.find((camp) => camp.id === session.campId)?.name ??
+                      "Camp"}
+                  </span>
                 )}
+
                 <span>{session.completed ? "Completed" : "Scheduled"}</span>
               </div>
             ))}
           </div>
         )}
       </section>
-
-
     </>
   );
 }
