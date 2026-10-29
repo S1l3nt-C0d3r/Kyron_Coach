@@ -413,7 +413,7 @@ export default function CampsPage({
                   </div>
                 </div>
 
-                <div className="form-actions" style={{ marginTop: 16 }}>
+                <div className="camp-card-actions">
                   <button
                     className="primary-button"
                     onClick={() => setSelectedCampId(camp.id)}

@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import { db } from "./database";
 import athletesRouter from "./athletes";
 import appStateRouter from "./appState";
-import { getCompetitions } from "../store";
+import { getCompetitions } from "./store";
 import { runIngestion } from "./ingestion";
 
 dotenv.config();
@@ -18,14 +18,10 @@ app.use(express.json({ limit: "1mb" }));
 app.get("/api/health", (_req, res) => {
   try {
     db.prepare("SELECT 1").get();
-    res.json({
-      status: "ok",
-      service: "kyron-coach-server",
-      database: "sqlite",
-    });
+    res.json({ status: "ok", service: "kyron-coach-server", database: "sqlite" });
   } catch (error) {
     console.error("Health check failed:", error);
-    res.status(500).json({ status: "error", database: "unavailable" });
+    res.status(500).json({ status: "error", database: "unavailable", error: error instanceof Error ? error.message : String(error) });
   }
 });
 

@@ -336,6 +336,33 @@ router.put("/:id", (req: Request, res: Response) => {
   }
 });
 
+// PATCH /api/athletes/:id/performance — explicit score-saving endpoint.
+router.patch("/:id/performance", (req: Request, res: Response) => {
+  const body = req.body as Record<string, unknown>;
+  const fields = ["power", "speed", "endurance"] as const;
+  if (!body || typeof body !== "object" || !fields.some((field) => field in body) ||
+      fields.some((field) => field in body && !isValidScore(body[field]))) {
+    return res.status(400).json({ error: "Power, speed, and endurance must be numbers between 0 and 10." });
+  }
+  try {
+    const existing = getAthlete(req.params.id);
+    if (!existing) return res.status(404).json({ error: "Athlete not found." });
+    db.prepare(`UPDATE athletes SET
+      power = @power, speed = @speed, endurance = @endurance,
+      updatedAt = CURRENT_TIMESTAMP WHERE id = @id`).run({
+        id: req.params.id,
+        power: body.power ?? existing.power,
+        speed: body.speed ?? existing.speed,
+        endurance: body.endurance ?? existing.endurance,
+      });
+    const updated = getAthlete(req.params.id);
+    return res.json({ success: true, athlete: updated });
+  } catch (error) {
+    console.error("Failed to save athlete performance:", error);
+    return res.status(500).json({ error: "Failed to save athlete performance to SQLite." });
+  }
+});
+
 // PATCH /api/athletes/:id
 // Supports updating only the performance scores, or any allowed subset
 // of athlete fields. Unspecified values remain unchanged.

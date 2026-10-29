@@ -9,6 +9,7 @@ import TrainingPage from "./pages/TrainingPage";
 import SchedulePage from "./pages/SchedulePage";
 import CampsPage from "./pages/CampsPage";
 import CompetitionsPage from "./pages/CompetitionsPage";
+import BackendDownScreen from "./components/BackendDownScreen";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
@@ -56,6 +57,42 @@ export default function App() {
 
   const [loadingCompetitions, setLoadingCompetitions] = useState(true);
   const [competitionError, setCompetitionError] = useState("");
+  const [backendStatus, setBackendStatus] = useState<"checking" | "online" | "offline">("checking");
+  const [backendError, setBackendError] = useState("Checking backend connection…");
+  const [backendRetry, setBackendRetry] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+    let timer: number | undefined;
+    const checkBackend = async () => {
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 4000);
+      try {
+        const response = await fetch(`${API_URL}/api/health`, { signal: controller.signal });
+        const payload = await response.json().catch(() => null) as {status?: string; database?: string; error?: string} | null;
+        if (!response.ok || payload?.status !== "ok") {
+          throw new Error(payload?.error || `Backend health check failed (HTTP ${response.status}).`);
+        }
+        if (active) {
+          setBackendStatus("online");
+          setBackendError("");
+        }
+      } catch (error) {
+        const message = error instanceof Error
+          ? (error.name === "AbortError" ? "The backend health check timed out after 4 seconds." : error.message)
+          : "Unknown connection error.";
+        if (active) {
+          setBackendStatus("offline");
+          setBackendError(`${message} API address: ${API_URL}.`);
+        }
+      } finally {
+        window.clearTimeout(timeout);
+      }
+    };
+    void checkBackend();
+    timer = window.setInterval(() => void checkBackend(), 5000);
+    return () => { active = false; if (timer !== undefined) window.clearInterval(timer); };
+  }, [backendRetry]);
 
   const loadAthletes = async () => {
     setLoadingAthletes(true);
@@ -118,7 +155,7 @@ export default function App() {
     stats: { power: number; speed: number; endurance: number },
   ): Promise<Athlete> => {
     const response = await fetch(
-      `${API_URL}/api/athletes/${encodeURIComponent(id)}`,
+      `${API_URL}/api/athletes/${encodeURIComponent(id)}/performance`,
       {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -132,7 +169,9 @@ export default function App() {
       );
     }
 
-    const updated = (await response.json()) as Athlete;
+    const payload = (await response.json()) as { success?: boolean; athlete?: Athlete; error?: string };
+    if (!payload.athlete) throw new Error(payload.error || "Backend did not return the updated athlete.");
+    const updated = payload.athlete;
 
     setAthletes((current) =>
       current.map((athlete) => (athlete.id === id ? updated : athlete)),
@@ -206,7 +245,6 @@ export default function App() {
 
       try {
         const stateResponse = await fetch(`${API_URL}/api/app-state`);
-
         if (!stateResponse.ok) {
           throw new Error(`Could not load app data (${stateResponse.status})`);
         }
@@ -221,58 +259,31 @@ export default function App() {
         }
 
         let collections = state.collections;
-
-        const needsMigration = !(
-          state.initialized.sessions &&
-          state.initialized.camps &&
-          state.initialized.workoutLogs
-        );
+        const needsMigration = !(state.initialized.sessions && state.initialized.camps && state.initialized.workoutLogs);
 
         if (needsMigration) {
-          const migrationResponse = await fetch(
-            `${API_URL}/api/app-state/migrate`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                collections: {
-                  // Exclude built-in demo sessions from older browser installs.
-                  sessions: sessions.filter(
-                    (session) =>
-                      !["session-1", "session-2", "session-3"].includes(
-                        session.id,
-                      ),
-                  ),
-                  camps,
-                  workoutLogs,
-                },
-              }),
-            },
-          );
+          const migrationResponse = await fetch(`${API_URL}/api/app-state/migrate`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              // Presentation setup: do not import stale browser/demo records.
+              // The SQLite collections remain the source of truth.
+              collections: { sessions: [], camps: [], workoutLogs: [] },
+            }),
+          });
 
           if (!migrationResponse.ok) {
-            throw new Error(
-              `Could not migrate app data (${migrationResponse.status})`,
-            );
+            throw new Error(`Could not migrate app data (${migrationResponse.status})`);
           }
 
-          const migrated =
-            (await migrationResponse.json()) as StoredCollectionsResponse;
-
-          if (
-            !migrated.collections ||
-            !Array.isArray(migrated.collections.sessions) ||
-            !Array.isArray(migrated.collections.camps) ||
-            !Array.isArray(migrated.collections.workoutLogs)
-          ) {
+          const migrated = (await migrationResponse.json()) as StoredCollectionsResponse;
+          if (!migrated.collections || !Array.isArray(migrated.collections.sessions) || !Array.isArray(migrated.collections.camps) || !Array.isArray(migrated.collections.workoutLogs)) {
             throw new Error("The server returned invalid migrated app data.");
           }
-
           collections = migrated.collections;
         }
 
         if (cancelled) return;
-
         setSessions(collections.sessions);
         setCamps(collections.camps);
         setWorkoutLogs(collections.workoutLogs);
@@ -281,7 +292,6 @@ export default function App() {
         if (cancelled) return;
 
         console.error("SQLite app data loading failed:", error);
-
         setAppDataError(
           "Training data could not be loaded from SQLite. Check that the backend is running, then retry. Your existing browser data has been retained.",
         );
@@ -318,14 +328,11 @@ export default function App() {
           throw new Error(`Failed to save ${collection} (${response.status})`);
         }
 
-        if (!controller.signal.aborted) {
-          setAppDataError("");
-        }
+        if (!controller.signal.aborted) setAppDataError("");
       } catch (error) {
         if (controller.signal.aborted) return;
 
         console.error(`Failed to persist ${collection}:`, error);
-
         setAppDataError(
           `Could not save ${collection} to SQLite. Check your backend connection before continuing.`,
         );
@@ -402,6 +409,16 @@ export default function App() {
     setAppDataReady(false);
     setAppDataRetry((value) => value + 1);
   };
+
+  if (backendStatus !== "online") {
+    return (
+      <BackendDownScreen
+        status={backendStatus}
+        error={backendError}
+        onRetry={() => { setBackendStatus("checking"); setBackendError("Retrying backend connection…"); setBackendRetry((value) => value + 1); }}
+      />
+    );
+  }
 
   return (
     <div className="app">

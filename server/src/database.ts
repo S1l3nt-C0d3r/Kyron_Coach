@@ -56,6 +56,71 @@ db.exec(`
     state_json TEXT NOT NULL,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
+
+  -- Scheduled training sessions are stored separately from completed logs.
+  CREATE TABLE IF NOT EXISTS training_sessions (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    session_date TEXT NOT NULL,
+    session_time TEXT NOT NULL,
+    category TEXT NOT NULL,
+    duration INTEGER NOT NULL DEFAULT 0,
+    completed INTEGER NOT NULL DEFAULT 0 CHECK (completed IN (0, 1)),
+    camp_id TEXT,
+    mode TEXT NOT NULL DEFAULT 'time',
+    sets INTEGER,
+    reps INTEGER,
+    rounds INTEGER,
+    notes TEXT NOT NULL DEFAULT '',
+    data_json TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE INDEX IF NOT EXISTS idx_training_sessions_date
+    ON training_sessions(session_date, session_time);
+
+  CREATE TABLE IF NOT EXISTS session_athletes (
+    session_id TEXT NOT NULL REFERENCES training_sessions(id) ON DELETE CASCADE,
+    athlete_id TEXT NOT NULL REFERENCES athletes(id) ON DELETE CASCADE,
+    PRIMARY KEY (session_id, athlete_id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_session_athletes_athlete
+    ON session_athletes(athlete_id);
+
+  CREATE TABLE IF NOT EXISTS training_camps (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    competition_id TEXT NOT NULL DEFAULT '',
+    start_date TEXT NOT NULL,
+    end_date TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'Planning',
+    data_json TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS camp_athletes (
+    camp_id TEXT NOT NULL REFERENCES training_camps(id) ON DELETE CASCADE,
+    athlete_id TEXT NOT NULL REFERENCES athletes(id) ON DELETE CASCADE,
+    PRIMARY KEY (camp_id, athlete_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS normalized_collections (
+    collection_key TEXT PRIMARY KEY,
+    initialized_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS workout_logs (
+    id TEXT PRIMARY KEY,
+    athlete_id TEXT NOT NULL REFERENCES athletes(id) ON DELETE CASCADE,
+    log_date TEXT NOT NULL,
+    log_time TEXT NOT NULL DEFAULT '',
+    title TEXT NOT NULL,
+    category TEXT NOT NULL,
+    rpe REAL NOT NULL DEFAULT 5,
+    camp_id TEXT,
+    data_json TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE INDEX IF NOT EXISTS idx_workout_logs_athlete_date
+    ON workout_logs(athlete_id, log_date DESC);
 `);
 
 /**

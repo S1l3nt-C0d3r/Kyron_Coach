@@ -187,7 +187,7 @@ export default function AthletesPage({
 
   if (selectedAthlete) {
     // Scores are stored in SQLite on a 0–10 scale; never replace them
-    // with hardcoded demo values or rescale them in the profile view.
+    // with hardcoded fallback values or rescale them in the profile view.
     const performance = {
       power: selectedAthlete.power ?? 0,
       speed: selectedAthlete.speed ?? 0,
@@ -233,22 +233,22 @@ export default function AthletesPage({
               </p>
             </div>
           </div>
-
-          <button
-            className="secondary-button"
-            onClick={() => {
-              setEditingStats(!editingStats);
-              setStatDraft({
-                power: String(selectedAthlete.power ?? 5),
-                speed: String(selectedAthlete.speed ?? 5),
-                endurance: String(selectedAthlete.endurance ?? 5),
-              });
-              setFormError("");
-            }}
-          >
-            {editingStats ? "Cancel editing" : "Edit scores"}
-          </button>
-
+          <div>
+            <button
+              className="secondary-button"
+              onClick={() => {
+                setEditingStats(!editingStats);
+                setStatDraft({
+                  power: String(selectedAthlete.power ?? 5),
+                  speed: String(selectedAthlete.speed ?? 5),
+                  endurance: String(selectedAthlete.endurance ?? 5),
+                });
+                setFormError("");
+              }}
+            >
+              {editingStats ? "Cancel editing" : "Edit scores"}
+            </button>
+          </div>
           {editingStats && (
             <div className="form-card">
               <div className="form-grid">

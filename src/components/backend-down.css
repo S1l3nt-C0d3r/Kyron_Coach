@@ -1,0 +1,33 @@
+.backend-down-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--background, #0b0d12);
+  color: var(--foreground, #f5f6f8);
+}
+.backend-down-card {
+  width: min(100%, 560px);
+  padding: 32px;
+  border: 1px solid var(--border, #343843);
+  border-radius: 18px;
+  background: var(--card, #151821);
+  box-shadow: 0 24px 80px rgb(0 0 0 / 25%);
+}
+.backend-down-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 20px;
+  border-radius: 50%;
+  background: #542a2a;
+  color: #ffb4b4;
+  font-size: 24px;
+  font-weight: 800;
+}
+.backend-down-card h1 { margin: 8px 0 12px; }
+.backend-down-description, .backend-down-help { color: var(--muted, #a5a9b5); line-height: 1.6; }
+.backend-error-details { margin: 24px 0; padding: 16px; border: 1px solid var(--border, #343843); border-radius: 10px; overflow-wrap: anywhere; }
+.backend-error-details p { margin-bottom: 0; color: #ffb4b4; white-space: pre-wrap; }
+.backend-down-help { margin-top: 20px; font-size: 13px; }

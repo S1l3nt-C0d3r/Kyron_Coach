@@ -7,7 +7,7 @@ import type {
   WorkoutLogMode,
 } from "../types";
 import { dateString, formatDate } from "../utils/date";
-import { exerciseOptions } from "../data/demoData";
+import { exerciseOptions } from "../data/exerciseOptions";
 
 type Props = {
   athletes: Athlete[];
@@ -27,13 +27,12 @@ export default function TrainingPage({
   athletes,
   camps,
   sessions,
-  workoutLogs,
   onAddSession,
   initialAthleteId,
 }: Props) {
   const [showWorkoutForm, setShowWorkoutForm] = useState(false);
   const [selectedAthleteIds, setSelectedAthleteIds] = useState<string[]>([]);
-  const [title, setTitle] = useState("Shadowboxing");
+  const [title, setTitle] = useState("");
   const [category, setCategory] = useState("Technical");
   const [date, setDate] = useState(dateString(0));
   const [time, setTime] = useState("17:00");
@@ -55,7 +54,7 @@ export default function TrainingPage({
 
   const resetForm = () => {
     setSelectedAthleteIds([]);
-    setTitle("Shadowboxing");
+    setTitle("");
     setCategory("Technical");
     setDate(dateString(0));
     setTime("17:00");
@@ -117,11 +116,10 @@ export default function TrainingPage({
   const athleteName = (id: string) =>
     athletes.find((athlete) => athlete.id === id)?.name ?? "Removed athlete";
 
-  const sortedLogs = [...workoutLogs].sort((a, b) =>
-    `${b.date}T${b.time || "00:00"}`.localeCompare(
-      `${a.date}T${a.time || "00:00"}`,
-    ),
-  );
+  const today = dateString(0);
+  const todaySessions = sessions
+    .filter((session) => session.date === today)
+    .sort((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`));
 
   return (
     <>
@@ -291,17 +289,15 @@ export default function TrainingPage({
       <section className="section">
         <div className="section-header">
           <div>
-            <h2>Scheduled workouts</h2>
-            <p className="muted">Planned sessions. They enter workout history only when completed.</p>
+            <h2>Today's scheduled workouts</h2>
+            <p className="muted">Only workouts scheduled for today are shown here. Full scheduling history is available in Schedule.</p>
           </div>
         </div>
-        {sessions.length === 0 ? (
-          <div className="empty-state">No workouts scheduled yet.</div>
+        {todaySessions.length === 0 ? (
+          <div className="empty-state">No workouts scheduled for today.</div>
         ) : (
           <div className="workout-log-list">
-            {[...sessions].sort((a, b) =>
-              `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`),
-            ).map((session) => (
+            {todaySessions.map((session) => (
               <div className="workout-log-row" key={session.id}>
                 <strong>{session.title}</strong>
                 <span>{formatDate(session.date)} · {session.time} · {session.type}</span>
@@ -316,33 +312,7 @@ export default function TrainingPage({
         )}
       </section>
 
-      <section className="section athlete-workout-section">
-        <div className="section-header">
-          <div>
-            <h2>Completed workout history</h2>
-            <p className="muted">Only completed workouts appear here.</p>
-          </div>
-          <span className="muted">{sortedLogs.length} total</span>
-        </div>
-        {sortedLogs.length === 0 ? (
-          <div className="empty-state">No workouts completed yet.</div>
-        ) : (
-          <div className="workout-log-list">
-            {sortedLogs.map((log) => (
-              <div className="workout-log-row" key={log.id}>
-                <strong>{log.title}</strong>
-                <span>{athleteName(log.athleteId)} · {formatDate(log.date)} · {log.time || "Time not recorded"} · {log.category}</span>
-                <div className="workout-log-details">
-                  {log.mode !== "time" && <span>{log.sets} sets × {log.reps} reps</span>}
-                  {log.mode !== "sets-reps" && <span>{log.duration} min{log.rounds !== undefined ? ` · ${log.rounds} rounds` : ""}</span>}
-                  <span>Effort: {log.rpe}/10</span>
-                </div>
-                {log.notes && <small>{log.notes}</small>}
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+
     </>
   );
 }
