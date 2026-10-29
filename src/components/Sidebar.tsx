@@ -1,5 +1,6 @@
 import type { Page } from "../types";
 import SidebarIcon, { type SidebarIconName } from "./SidebarIcon";
+import logo from "../../Kyron_Logo.png";
 
 type Props = {
   page: Page;
@@ -25,7 +26,7 @@ export default function Sidebar({ page, setPage }: Props) {
       <div className="brand">
         <div className="brand-mark">
           <img
-            src="../../Kyron_Logo.png"
+            src={logo}
             alt="Kyron Coach logo"
             height={50}
             width={50}
