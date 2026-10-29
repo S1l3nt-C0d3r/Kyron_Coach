@@ -5,7 +5,6 @@ import type {
   Page,
   TrainingSession,
 } from "../types";
-import { demoPerformance, defaultPerformance } from "../data/demoData";
 import AthletePerformanceCard from "../components/AthletePerformanceCard";
 import StatCard from "../components/StatCard";
 import SessionCard from "../components/SessionCard";
@@ -78,7 +77,7 @@ export default function Dashboard({
           <div>
             <h2>Athlete Performance</h2>
             <p className="muted">
-              Power, speed, and endurance scores out of 100.
+              Power, speed, and endurance scores out of 10.
             </p>
           </div>
         </div>
@@ -88,7 +87,11 @@ export default function Dashboard({
             <AthletePerformanceCard
               key={athlete.id}
               athlete={athlete}
-              performance={demoPerformance[athlete.id] || defaultPerformance}
+              performance={{
+                power: athlete.power ?? 0,
+                speed: athlete.speed ?? 0,
+                endurance: athlete.endurance ?? 0,
+              }}
               onClick={() => onOpenAthlete(athlete.id)}
             />
           ))}

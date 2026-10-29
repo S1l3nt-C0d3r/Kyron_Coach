@@ -1,7 +1,6 @@
 import { useState } from "react";
 import type { Athlete, TrainingSession, WorkoutLog } from "../types";
 import { formatDate } from "../utils/date";
-import { demoPerformance, defaultPerformance } from "../data/demoData";
 import AthletePerformanceCard from "../components/AthletePerformanceCard";
 import SessionCard from "../components/SessionCard";
 
@@ -187,21 +186,12 @@ export default function AthletesPage({
   );
 
   if (selectedAthlete) {
-    const fallback = demoPerformance[selectedAthlete.id] || defaultPerformance;
-
+    // Scores are stored in SQLite on a 0–10 scale; never replace them
+    // with hardcoded demo values or rescale them in the profile view.
     const performance = {
-      power:
-        selectedAthlete.power !== undefined
-          ? selectedAthlete.power * 10
-          : fallback.power,
-      speed:
-        selectedAthlete.speed !== undefined
-          ? selectedAthlete.speed * 10
-          : fallback.speed,
-      endurance:
-        selectedAthlete.endurance !== undefined
-          ? selectedAthlete.endurance * 10
-          : fallback.endurance,
+      power: selectedAthlete.power ?? 0,
+      speed: selectedAthlete.speed ?? 0,
+      endurance: selectedAthlete.endurance ?? 0,
     };
 
     const athleteLogs = workoutLogs

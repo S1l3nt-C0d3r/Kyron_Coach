@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Competition, Page } from "./types";
 import type { Athlete, Camp, TrainingSession, WorkoutLog } from "./types";
-import { demoTraining } from "./data/demoData";
 import { usePersistentState } from "./hooks/UsePersistentState";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
@@ -41,7 +40,7 @@ export default function App() {
 
   const [sessions, setSessions] = usePersistentState<TrainingSession[]>(
     "boxingos-training",
-    demoTraining,
+    [],
   );
 
   const [camps, setCamps] = usePersistentState<Camp[]>("boxingos-camps", []);
@@ -206,41 +205,83 @@ export default function App() {
       setAppDataError("");
 
       try {
-        const response = await fetch(`${API_URL}/api/app-state/migrate`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            collections: { sessions, camps, workoutLogs },
-          }),
-        });
+        const stateResponse = await fetch(`${API_URL}/api/app-state`);
 
-        if (!response.ok) {
-          throw new Error(
-            `Could not load or migrate app data (${response.status})`,
-          );
+        if (!stateResponse.ok) {
+          throw new Error(`Could not load app data (${stateResponse.status})`);
         }
 
-        const result = (await response.json()) as StoredCollectionsResponse;
+        const state = (await stateResponse.json()) as {
+          collections: StoredCollections;
+          initialized: Record<keyof StoredCollections, boolean>;
+        };
 
-        if (
-          !result.collections ||
-          !Array.isArray(result.collections.sessions) ||
-          !Array.isArray(result.collections.camps) ||
-          !Array.isArray(result.collections.workoutLogs)
-        ) {
+        if (!state.collections || !state.initialized) {
           throw new Error("The server returned invalid app data.");
+        }
+
+        let collections = state.collections;
+
+        const needsMigration = !(
+          state.initialized.sessions &&
+          state.initialized.camps &&
+          state.initialized.workoutLogs
+        );
+
+        if (needsMigration) {
+          const migrationResponse = await fetch(
+            `${API_URL}/api/app-state/migrate`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                collections: {
+                  // Exclude built-in demo sessions from older browser installs.
+                  sessions: sessions.filter(
+                    (session) =>
+                      !["session-1", "session-2", "session-3"].includes(
+                        session.id,
+                      ),
+                  ),
+                  camps,
+                  workoutLogs,
+                },
+              }),
+            },
+          );
+
+          if (!migrationResponse.ok) {
+            throw new Error(
+              `Could not migrate app data (${migrationResponse.status})`,
+            );
+          }
+
+          const migrated =
+            (await migrationResponse.json()) as StoredCollectionsResponse;
+
+          if (
+            !migrated.collections ||
+            !Array.isArray(migrated.collections.sessions) ||
+            !Array.isArray(migrated.collections.camps) ||
+            !Array.isArray(migrated.collections.workoutLogs)
+          ) {
+            throw new Error("The server returned invalid migrated app data.");
+          }
+
+          collections = migrated.collections;
         }
 
         if (cancelled) return;
 
-        setSessions(result.collections.sessions);
-        setCamps(result.collections.camps);
-        setWorkoutLogs(result.collections.workoutLogs);
+        setSessions(collections.sessions);
+        setCamps(collections.camps);
+        setWorkoutLogs(collections.workoutLogs);
         setAppDataReady(true);
       } catch (error) {
         if (cancelled) return;
 
         console.error("SQLite app data loading failed:", error);
+
         setAppDataError(
           "Training data could not be loaded from SQLite. Check that the backend is running, then retry. Your existing browser data has been retained.",
         );
@@ -277,11 +318,14 @@ export default function App() {
           throw new Error(`Failed to save ${collection} (${response.status})`);
         }
 
-        if (!controller.signal.aborted) setAppDataError("");
+        if (!controller.signal.aborted) {
+          setAppDataError("");
+        }
       } catch (error) {
         if (controller.signal.aborted) return;
 
         console.error(`Failed to persist ${collection}:`, error);
+
         setAppDataError(
           `Could not save ${collection} to SQLite. Check your backend connection before continuing.`,
         );

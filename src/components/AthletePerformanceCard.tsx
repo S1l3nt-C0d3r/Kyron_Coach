@@ -43,38 +43,30 @@ export default function AthletePerformanceCard({
       </div>
 
       <div className="athlete-performance-metrics">
-        {metrics.map((metric) => {
-          // Existing stored/demo values are on a 0–100 scale.
-          // Convert them for display without changing the underlying data.
-          const score = Math.max(0, Math.min(10, metric.value / 10));
+        {metrics.map((metric) => (
+          <div className="athlete-performance-row" key={metric.label}>
+            <span className="athlete-performance-label">{metric.label}:</span>
 
-          return (
-            <div className="athlete-performance-row" key={metric.label}>
-              <span className="athlete-performance-label">{metric.label}:</span>
-
+            <div
+              className="athlete-performance-track"
+              role="progressbar"
+              aria-label={`${metric.label} score`}
+              aria-valuenow={metric.value}
+              aria-valuemin={0}
+              aria-valuemax={10}
+            >
               <div
-                className="athlete-performance-track"
-                role="progressbar"
-                aria-label={`${metric.label} score`}
-                aria-valuenow={score}
-                aria-valuemin={0}
-                aria-valuemax={10}
-              >
-                <div
-                  className="athlete-performance-fill"
-                  style={{
-                    width: `${score * 10}%`,
-                    backgroundColor: metric.color,
-                  }}
-                />
-              </div>
-
-              <span className="athlete-performance-value">
-                {score.toFixed(1)}/10
-              </span>
+                className="athlete-performance-fill"
+                style={{
+                  width: `${Math.max(0, Math.min(10, metric.value)) * 10}%`,
+                  backgroundColor: metric.color,
+                }}
+              />
             </div>
-          );
-        })}
+
+            <span className="athlete-performance-value">{Number(metric.value).toFixed(1)}/10</span>
+          </div>
+        ))}
       </div>
     </button>
   );
