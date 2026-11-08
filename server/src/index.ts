@@ -6,6 +6,7 @@ import athletesRouter from "./athletes";
 import appStateRouter from "./appState";
 import { getCompetitions } from "./store";
 import { runIngestion } from "./ingestion";
+import integrationsRouter from "./integrations";
 
 dotenv.config();
 
@@ -28,6 +29,7 @@ app.get("/api/health", (_req, res) => {
 // Both routers import the same singleton SQLite connection from database.ts.
 app.use("/api/athletes", athletesRouter);
 app.use("/api/app-state", appStateRouter);
+app.use("/api/integrations", integrationsRouter);
 
 app.get("/api/competitions", (_req, res) => {
   try {

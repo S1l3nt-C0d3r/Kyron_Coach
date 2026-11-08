@@ -221,7 +221,32 @@ export default function AthletesPage({
               {selectedAthlete.age}
             </p>
           </div>
-          <span className="status upcoming">{selectedAthlete.status}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <span className="status upcoming">{selectedAthlete.status}</span>
+            <button
+              className="secondary-button"
+              onClick={async () => {
+                const athleteEmail = window.prompt(`Enter ${selectedAthlete.name}'s Akiles account email:`);
+                if (!athleteEmail) return;
+                const message = window.prompt("Optional onboarding note for the athlete:") || "Your coach has invited you to connect with Kyron Coach.";
+                try {
+                  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
+                  const response = await fetch(`${apiUrl}/api/integrations/onboarding-invitations`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ athleteName: selectedAthlete.name, athleteEmail, message }),
+                  });
+                  const payload = await response.json();
+                  if (!response.ok) throw new Error(payload.error || "Could not send invitation.");
+                  window.alert(`Onboarding invitation sent to ${athleteEmail}. The athlete can accept it in Akiles.`);
+                } catch (error) {
+                  window.alert(error instanceof Error ? error.message : "Could not send invitation.");
+                }
+              }}
+            >
+              Invite to Akiles
+            </button>
+          </div>
         </header>
 
         <section className="section">

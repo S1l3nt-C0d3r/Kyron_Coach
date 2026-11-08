@@ -121,6 +121,26 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_workout_logs_athlete_date
     ON workout_logs(athlete_id, log_date DESC);
+
+  CREATE TABLE IF NOT EXISTS akiles_onboarding_invitations (
+    id TEXT PRIMARY KEY, athlete_name TEXT NOT NULL, athlete_email TEXT NOT NULL,
+    coach_id TEXT NOT NULL, coach_name TEXT NOT NULL, message TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','accepted','declined','superseded')),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, responded_at TEXT
+  );
+  CREATE INDEX IF NOT EXISTS idx_akiles_invites_email ON akiles_onboarding_invitations(athlete_email,status);
+  CREATE TABLE IF NOT EXISTS akiles_relationships (
+    id TEXT PRIMARY KEY, invitation_id TEXT NOT NULL UNIQUE REFERENCES akiles_onboarding_invitations(id),
+    athlete_email TEXT NOT NULL, athlete_name TEXT NOT NULL, coach_id TEXT NOT NULL, coach_name TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE INDEX IF NOT EXISTS idx_akiles_relationship_email ON akiles_relationships(athlete_email,status);
+  CREATE TABLE IF NOT EXISTS akiles_shared_workouts (
+    id TEXT PRIMARY KEY, relationship_id TEXT NOT NULL REFERENCES akiles_relationships(id),
+    athlete_email TEXT NOT NULL, title TEXT NOT NULL, category TEXT NOT NULL, log_date TEXT NOT NULL,
+    duration INTEGER NOT NULL DEFAULT 0, sets INTEGER, reps INTEGER, rounds INTEGER, rpe REAL NOT NULL DEFAULT 5,
+    notes TEXT NOT NULL DEFAULT '', source_workout_id TEXT NOT NULL, UNIQUE(relationship_id,source_workout_id)
+  );
 `);
 
 /**
