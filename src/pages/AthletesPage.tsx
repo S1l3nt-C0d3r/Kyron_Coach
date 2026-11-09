@@ -230,18 +230,41 @@ export default function AthletesPage({
                 if (!athleteEmail) return;
                 const message = window.prompt("Optional onboarding note for the athlete:") || "Your coach has invited you to connect with Kyron Coach.";
                 try {
-                  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
-                  const response = await fetch(`${apiUrl}/api/integrations/onboarding-invitations`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ athleteName: selectedAthlete.name, athleteEmail, message }),
-                  });
-                  const payload = await response.json();
-                  if (!response.ok) throw new Error(payload.error || "Could not send invitation.");
-                  window.alert(`Onboarding invitation sent to ${athleteEmail}. The athlete can accept it in Akiles.`);
-                } catch (error) {
-                  window.alert(error instanceof Error ? error.message : "Could not send invitation.");
-                }
+                  const apiUrl =
+										import.meta.env.VITE_API_URL || "http://localhost:4000";
+									const response = await fetch(
+										`${apiUrl}/api/integrations/onboarding-invitations`,
+										{
+											method: "POST",
+											headers: {
+												"Content-Type": "application/json",
+											},
+											body: JSON.stringify({
+												athleteId: selectedAthlete.id,
+												athleteName: selectedAthlete.name,
+												athleteEmail,
+												message,
+											}),
+										},
+									);
+
+									const data = await response.json();
+
+									if (!response.ok) {
+										throw new Error(data.error || "Could not send invitation.");
+									}
+
+									// Keep your existing success handling here.
+									alert(`Invitation sent to ${athleteEmail}.`);
+								} catch (error) {
+									console.error("Failed to send Akiles invitation:", error);
+
+									alert(
+										error instanceof Error
+											? error.message
+											: "Something went wrong while sending the invitation.",
+									);
+								}
               }}
             >
               Invite to Akiles

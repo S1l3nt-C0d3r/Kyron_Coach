@@ -168,6 +168,29 @@ ensureColumn("athletes", "speed", "REAL NOT NULL DEFAULT 5");
 ensureColumn("athletes", "endurance", "REAL NOT NULL DEFAULT 5");
 ensureColumn("athletes", "createdAt", "TEXT");
 ensureColumn("athletes", "updatedAt", "TEXT");
+// Link each Akiles account to the exact Kyron athlete record.
+ensureColumn("akiles_onboarding_invitations", "athlete_id", "TEXT");
+ensureColumn("akiles_relationships", "athlete_id", "TEXT");
+
+// Store the Kyron athlete ID against every workout received from Akiles.
+ensureColumn("akiles_shared_workouts", "athlete_id", "TEXT");
+
+// Link Akiles invitations, relationships and shared workouts
+// to the corresponding Kyron athlete record.
+ensureColumn("akiles_onboarding_invitations", "athlete_id", "TEXT");
+ensureColumn("akiles_relationships", "athlete_id", "TEXT");
+ensureColumn("akiles_shared_workouts", "athlete_id", "TEXT");
+
+// Backfill relationships created before athlete_id was added.
+db.exec(`
+  UPDATE akiles_relationships
+  SET athlete_id = (
+    SELECT athlete_id
+    FROM akiles_onboarding_invitations
+    WHERE akiles_onboarding_invitations.id = akiles_relationships.invitation_id
+  )
+  WHERE athlete_id IS NULL;
+`);
 
 // New installations start empty: athlete records are created by the user.
 
