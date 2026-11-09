@@ -451,4 +451,146 @@ router.get("/assigned-workouts", requireIntegrationKey, (req, res) => {
 	res.json({ workouts });
 });
 
+// ------------------------------------------------------
+// COACH NOTES -> AKILES
+// ------------------------------------------------------
+router.get("/coach-notes", requireIntegrationKey, (req, res) => {
+	const email = String(req.query.email || "")
+		.trim()
+		.toLowerCase();
+	if (!email)
+		return res.status(400).json({ error: "Athlete email is required." });
+
+	const relationship = db
+		.prepare(
+			`SELECT athlete_id AS athleteId, coach_name AS coachName
+     FROM akiles_relationships
+     WHERE lower(athlete_email) = ? AND status = 'active'
+     ORDER BY created_at DESC LIMIT 1`,
+		)
+		.get(email) as { athleteId: string | null; coachName: string } | undefined;
+
+	if (!relationship?.athleteId) return res.json({ notes: [] });
+	const notes = db
+		.prepare(
+			`SELECT id, athleteId, message, createdAt
+     FROM coach_notes WHERE athleteId = ?
+     ORDER BY createdAt DESC, rowid DESC`,
+		)
+		.all(relationship.athleteId);
+	res.json({ notes, coachName: relationship.coachName });
+});
+
+// ------------------------------------------------------
+// KYRON COACH COMPLETION -> AKILES
+// ------------------------------------------------------
+router.post("/training-sessions/:sessionId/complete", async (req, res) => {
+	const sessionId = String(req.params.sessionId || "");
+	const session = db
+		.prepare(
+			`SELECT id, data_json AS dataJson FROM training_sessions WHERE id = ?`,
+		)
+		.get(sessionId) as { id: string; dataJson: string } | undefined;
+	if (!session)
+		return res.status(404).json({ error: "Training session not found." });
+
+	let workout: any;
+	try {
+		workout = JSON.parse(session.dataJson);
+	} catch {
+		return res
+			.status(500)
+			.json({ error: "Stored training session is invalid." });
+	}
+
+	const alreadyCompleted = Boolean(workout.completed);
+	const completedAt =
+		typeof workout.completedAt === "string"
+			? workout.completedAt
+			: new Date().toISOString();
+	workout.completed = true;
+	workout.completedAt = completedAt;
+
+	// Athlete assignments live in the normalized join table, not necessarily in data_json.
+	const athleteIds = (
+		db
+			.prepare(
+				`SELECT athlete_id AS athleteId FROM session_athletes WHERE session_id = ?`,
+			)
+			.all(sessionId) as Array<{ athleteId: string }>
+	).map((row) => row.athleteId);
+	const tx = db.transaction(() => {
+		db.prepare(
+			`UPDATE training_sessions SET completed = 1, data_json = ? WHERE id = ?`,
+		).run(JSON.stringify(workout), sessionId);
+	});
+	tx();
+
+	const akilesUrl = (process.env.AKILES_API_URL || "").replace(/\/$/, "");
+	const sharedKey =
+		process.env.AKILES_INTEGRATION_KEY || process.env.AKILES_API_KEY || "";
+	if (!akilesUrl || !sharedKey) {
+		return res.json({
+			success: true,
+			completedAt,
+			synced: 0,
+			syncWarning:
+				"Set AKILES_API_URL and AKILES_INTEGRATION_KEY on the Kyron backend to enable Akiles sync.",
+		});
+	}
+
+	let synced = 0;
+	const failures: string[] = [];
+	for (const athleteId of athleteIds) {
+		const relationship = db
+			.prepare(
+				`SELECT athlete_email AS athleteEmail FROM akiles_relationships
+       WHERE athlete_id = ? AND status = 'active'
+       ORDER BY created_at DESC LIMIT 1`,
+			)
+			.get(athleteId) as { athleteEmail: string } | undefined;
+		if (!relationship?.athleteEmail) continue;
+
+		try {
+			const response = await fetch(
+				`${akilesUrl}/api/integrations/coach-workout-completions`,
+				{
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						Authorization: `Bearer ${sharedKey}`,
+					},
+					body: JSON.stringify({
+						athleteEmail: relationship.athleteEmail,
+						workout: {
+							id: sessionId,
+							title: String(workout.title || "Coach-assigned workout"),
+							category: String(workout.type || workout.category || "Training"),
+							date: String(workout.date || completedAt.slice(0, 10)),
+							duration: Number(workout.duration || 0),
+							sets: workout.sets ?? null,
+							reps: workout.reps ?? null,
+							rounds: workout.rounds ?? null,
+							rpe: Number(workout.rpe || 5),
+							notes: String(workout.notes || ""),
+							completedAt,
+						},
+					}),
+				},
+			);
+			if (!response.ok) {
+				const payload: any = await response.json().catch(() => ({}));
+				throw new Error(payload.error || `Akiles returned ${response.status}`);
+			}
+			synced += 1;
+		} catch (error) {
+			failures.push(
+				`${athleteId}: ${error instanceof Error ? error.message : "sync failed"}`,
+			);
+		}
+	}
+
+	res.json({ success: true, alreadyCompleted, completedAt, synced, failures });
+});
+
 export default router;

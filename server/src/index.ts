@@ -7,6 +7,8 @@ import fs from "node:fs";
 
 import { getCompetitions } from "./store";
 import { runIngestion } from "./ingestion";
+import integrationsRouter from "./integrations";
+import appStateRouter from "./appState";
 
 dotenv.config();
 
@@ -24,6 +26,8 @@ db.pragma("foreign_keys = ON");
 
 app.use(cors());
 app.use(express.json({ limit: "1mb" }));
+app.use("/api/integrations", integrationsRouter);
+app.use("/api/app-state", appStateRouter);
 
 /* =========================
    DATABASE INITIALIZATION

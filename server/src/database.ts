@@ -3,17 +3,17 @@ import path from "node:path";
 import Database from "better-sqlite3";
 
 export type Athlete = {
-  id: string;
-  name: string;
-  age: number;
-  weightClass: string;
-  category: string;
-  status: "Active" | "Inactive";
-  power: number;
-  speed: number;
-  endurance: number;
-  createdAt?: string;
-  updatedAt?: string;
+	id: string;
+	name: string;
+	age: number;
+	weightClass: string;
+	category: string;
+	status: "Active" | "Inactive";
+	power: number;
+	speed: number;
+	endurance: number;
+	createdAt?: string;
+	updatedAt?: string;
 };
 
 const dataDirectory = path.join(process.cwd(), "data");
@@ -50,6 +50,15 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS idx_athletes_status
     ON athletes(status);
+
+  CREATE TABLE IF NOT EXISTS coach_notes (
+    id TEXT PRIMARY KEY,
+    athleteId TEXT NOT NULL REFERENCES athletes(id) ON DELETE CASCADE,
+    message TEXT NOT NULL,
+    createdAt TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_coach_notes_athlete_created
+    ON coach_notes(athleteId, createdAt DESC);
 
   CREATE TABLE IF NOT EXISTS app_state (
     state_key TEXT PRIMARY KEY,
@@ -148,17 +157,17 @@ db.exec(`
  * This makes startup migrations safe to run repeatedly.
  */
 function ensureColumn(
-  tableName: string,
-  columnName: string,
-  definition: string,
+	tableName: string,
+	columnName: string,
+	definition: string,
 ): void {
-  const columns = db.prepare(`PRAGMA table_info(${tableName})`).all() as Array<{
-    name: string;
-  }>;
+	const columns = db.prepare(`PRAGMA table_info(${tableName})`).all() as Array<{
+		name: string;
+	}>;
 
-  if (!columns.some((column) => column.name === columnName)) {
-    db.exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`);
-  }
+	if (!columns.some((column) => column.name === columnName)) {
+		db.exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`);
+	}
 }
 
 // Migrate existing databases without deleting athlete records.
@@ -195,5 +204,5 @@ db.exec(`
 // New installations start empty: athlete records are created by the user.
 
 export function closeDatabase(): void {
-  db.close();
+	db.close();
 }
