@@ -482,9 +482,11 @@ router.get("/coach-notes", requireIntegrationKey, (req, res) => {
 });
 
 // ------------------------------------------------------
-// KYRON COACH COMPLETION -> AKILES
+// KYRON COACH COMPLETION
+// Kyron remains the source of truth. Akiles pulls completed sessions
+// through GET /assigned-workouts using KYRON_API_URL + the shared key.
 // ------------------------------------------------------
-router.post("/training-sessions/:sessionId/complete", async (req, res) => {
+router.post("/training-sessions/:sessionId/complete", (req, res) => {
 	const sessionId = String(req.params.sessionId || "");
 	const session = db
 		.prepare(
@@ -511,86 +513,16 @@ router.post("/training-sessions/:sessionId/complete", async (req, res) => {
 	workout.completed = true;
 	workout.completedAt = completedAt;
 
-	// Athlete assignments live in the normalized join table, not necessarily in data_json.
-	const athleteIds = (
-		db
-			.prepare(
-				`SELECT athlete_id AS athleteId FROM session_athletes WHERE session_id = ?`,
-			)
-			.all(sessionId) as Array<{ athleteId: string }>
-	).map((row) => row.athleteId);
-	const tx = db.transaction(() => {
-		db.prepare(
-			`UPDATE training_sessions SET completed = 1, data_json = ? WHERE id = ?`,
-		).run(JSON.stringify(workout), sessionId);
+	db.prepare(
+		`UPDATE training_sessions SET completed = 1, data_json = ? WHERE id = ?`,
+	).run(JSON.stringify(workout), sessionId);
+
+	res.json({
+		success: true,
+		alreadyCompleted,
+		completedAt,
+		synced: "available-via-kyron-api",
 	});
-	tx();
-
-	const akilesUrl = (process.env.AKILES_API_URL || "").replace(/\/$/, "");
-	const sharedKey =
-		process.env.AKILES_INTEGRATION_KEY || process.env.AKILES_API_KEY || "";
-	if (!akilesUrl || !sharedKey) {
-		return res.json({
-			success: true,
-			completedAt,
-			synced: 0,
-			syncWarning:
-				"Set AKILES_API_URL and AKILES_INTEGRATION_KEY on the Kyron backend to enable Akiles sync.",
-		});
-	}
-
-	let synced = 0;
-	const failures: string[] = [];
-	for (const athleteId of athleteIds) {
-		const relationship = db
-			.prepare(
-				`SELECT athlete_email AS athleteEmail FROM akiles_relationships
-       WHERE athlete_id = ? AND status = 'active'
-       ORDER BY created_at DESC LIMIT 1`,
-			)
-			.get(athleteId) as { athleteEmail: string } | undefined;
-		if (!relationship?.athleteEmail) continue;
-
-		try {
-			const response = await fetch(
-				`${akilesUrl}/api/integrations/coach-workout-completions`,
-				{
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-						Authorization: `Bearer ${sharedKey}`,
-					},
-					body: JSON.stringify({
-						athleteEmail: relationship.athleteEmail,
-						workout: {
-							id: sessionId,
-							title: String(workout.title || "Coach-assigned workout"),
-							category: String(workout.type || workout.category || "Training"),
-							date: String(workout.date || completedAt.slice(0, 10)),
-							duration: Number(workout.duration || 0),
-							sets: workout.sets ?? null,
-							reps: workout.reps ?? null,
-							rounds: workout.rounds ?? null,
-							rpe: Number(workout.rpe || 5),
-							notes: String(workout.notes || ""),
-							completedAt,
-						},
-					}),
-				},
-			);
-			if (!response.ok) {
-				const payload: any = await response.json().catch(() => ({}));
-				throw new Error(payload.error || `Akiles returned ${response.status}`);
-			}
-			synced += 1;
-		} catch (error) {
-			failures.push(
-				`${athleteId}: ${error instanceof Error ? error.message : "sync failed"}`,
-			);
-		}
-	}
-
-	res.json({ success: true, alreadyCompleted, completedAt, synced, failures });
 });
 
 export default router;
