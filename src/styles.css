@@ -86,8 +86,8 @@ select {
 }
 
 .brand-mark {
-  width: 38px;
-  height: 38px;
+  width: 50px;
+  height: 50px;
 
   border-radius: 10px;
 
@@ -3084,3 +3084,101 @@ textarea:focus-visible {
     width: 100%;
   }
 }
+
+
+/* KYRON LIGHT THEME — coordinated with Akiles' ivory, charcoal and antique-gold palette.
+   Theme-only overrides. Keeps Kyron's dark navigation rail and existing brand accents. */
+:root {
+  color-scheme: light;
+  --arete-black: #f4f3ef;
+  --arete-panel: #ffffff;
+  --arete-panel-raised: #faf9f6;
+  --arete-gold: #b99a55;
+  --arete-gold-light: #d2b875;
+  --arete-gold-deep: #8d7137;
+  --arete-ivory: #22231f;
+  --arete-white: #ffffff;
+  --arete-muted: #777970;
+  --arete-border: #e5e2da;
+  --kyron-black: #f4f3ef;
+  --kyron-panel: #ffffff;
+  --kyron-panel-hover: #f7f5ef;
+  --kyron-gold: #b99a55;
+  --kyron-gold-light: #d2b875;
+  --kyron-ivory: #22231f;
+  --kyron-muted: #777970;
+  --kyron-border: #e5e2da;
+}
+
+html, body, #root { background: #f4f3ef !important; color: #22231f !important; }
+body { background: #f4f3ef !important; color: #22231f !important; }
+.app { background: #f4f3ef !important; }
+
+/* Keep the charcoal Kyron navigation rail, matching Akiles. */
+.sidebar { background: #111214 !important; color: #f4eddd !important; border-right: 1px solid #302d25 !important; }
+.sidebar::after { opacity: .2 !important; }
+.brand-mark { background: #f5f2e9 !important; color: #111214 !important; border: 1px solid #d2b875 !important; box-shadow: none !important; }
+.brand-name { color: #f2e9d4 !important; }
+.brand-subtitle { color: #b99a55 !important; }
+.nav-item { color: #b7b5ad !important; background: transparent !important; border-color: transparent !important; }
+.nav-item:hover { background: #202124 !important; color: #fff !important; border-color: #393126 !important; }
+.nav-item.active { background: #292821 !important; color: #e1c47e !important; border-color: #5a4b2d !important; box-shadow: inset 2px 0 #b99a55 !important; }
+.nav-icon { color: #b99a55 !important; }
+.coach-card { background: transparent !important; border-color: #393126 !important; }
+.coach-card .avatar { background: #37342b !important; color: #e2c47c !important; }
+.coach-card span { color: #aaa59a !important; }
+
+/* Main workspace and page hierarchy. */
+.main-content { background: #f4f3ef !important; color: #22231f !important; }
+.page-header { border-color: #e5e2da !important; }
+.page-header::after { background: #f4f3ef !important; color: #8d7137 !important; }
+.page-header h1, .section-header h2, .section > h2, .form-card h2, .empty-state h2,
+.competition-info h3, .detail-card strong, .athlete-card h3, .session-main h3,
+.camp-card h2, .camp-athletes strong, .session-time { color: #22231f !important; }
+.eyebrow, .nav-caption { color: #a18a51 !important; }
+.muted, .competition-info p, .organizer, .detail-label, .athlete-category,
+.athlete-details span, .session-main p, .session-athletes, .camp-athletes span,
+.stat-card span, .source-info { color: #777970 !important; }
+
+/* Akiles-style white cards, quiet borders and restrained gold accents. */
+.stat-card, .competition-card, .empty-state, .detail-card, .form-card,
+.athlete-card, .session-card, .camp-card, .athlete-performance-card,
+.athlete-roster-card, .coach-card, .section, .workout-log-form,
+.workout-log-list, .athlete-workout-section {
+  background: #ffffff !important;
+  border: 1px solid #e5e2da !important;
+  border-radius: 7px !important;
+  color: #22231f !important;
+  box-shadow: 0 2px 10px rgba(30, 28, 20, .035) !important;
+}
+.stat-card::before, .form-card::before, .athlete-card::before, .camp-card::before { background: linear-gradient(90deg, transparent, rgba(185,154,85,.55), transparent) !important; }
+.stat-card strong, .detail-card strong, .athlete-performance-value { color: #22231f !important; }
+.competition-card-button:hover .competition-card { border-color: #b99a55 !important; box-shadow: 0 5px 16px rgba(30,28,20,.08) !important; }
+
+/* Buttons and interactive controls. */
+.primary-button { color: #f4eddd !important; background: #171815 !important; border: 1px solid #171815 !important; box-shadow: none !important; }
+.primary-button:hover { background: #302d23 !important; border-color: #b99a55 !important; color: #e5ca83 !important; }
+.secondary-button { color: #373831 !important; background: #ffffff !important; border: 1px solid #dcd9d0 !important; }
+.secondary-button:hover { color: #8d7137 !important; background: #faf9f6 !important; border-color: #b99a55 !important; }
+.back-button, .inline-button { color: #9a8045 !important; }
+select, .form-input, .search-input, .filter-select, input, textarea {
+  color: #30312b !important; background: #ffffff !important; border-color: #dedbd2 !important; color-scheme: light !important;
+}
+select option { color: #30312b !important; background: #ffffff !important; }
+select:focus, .form-input:focus, .search-input:focus, .filter-select:focus,
+input:focus, textarea:focus { border-color: #b99a55 !important; box-shadow: 0 0 0 2px rgba(185,154,85,.14) !important; }
+
+/* Calendar, tags, status chips and workout details. */
+.date-box, .schedule-date, .day-button, .week-selector, .workout-mode-option,
+.workout-mode-toggle, .athlete-performance-track { background: #f2efe6 !important; border-color: #e5e2da !important; color: #777970 !important; }
+.day-button.active, .workout-mode-option.active, .workout-mode-toggle.active { background: #292821 !important; color: #e1c47e !important; border-color: #b99a55 !important; }
+.status, .session-type { background: #efeee9 !important; color: #77766f !important; border-color: #e5e2da !important; }
+.status.upcoming { background: #f6f0df !important; color: #927a3e !important; }
+.error-banner { background: #fff1ee !important; border-color: #edc7bf !important; color: #9b5144 !important; }
+.workout-log-row { border-color: #efede7 !important; }
+.workout-log-row span, .workout-log-row small { color: #777970 !important; }
+
+/* Dialogs and overlays. */
+.modal, .modal-content, .dialog, [role="dialog"] { background: #faf9f5 !important; color: #22231f !important; border-color: #e5e2da !important; }
+.modal-backdrop { background: rgba(17,18,20,.55) !important; }
+
