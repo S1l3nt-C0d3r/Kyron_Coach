@@ -3182,3 +3182,563 @@ input:focus, textarea:focus { border-color: #b99a55 !important; box-shadow: 0 0 
 .modal, .modal-content, .dialog, [role="dialog"] { background: #faf9f5 !important; color: #22231f !important; border-color: #e5e2da !important; }
 .modal-backdrop { background: rgba(17,18,20,.55) !important; }
 
+
+/* =========================================================
+   KYRON LIGHT THEME — FINAL SIZE & SPACING NORMALISATION
+   Appended last so these layout refinements override legacy
+   dark-theme sizing without changing component behavior.
+========================================================= */
+
+:root {
+  --kyron-space-1: 6px;
+  --kyron-space-2: 10px;
+  --kyron-space-3: 14px;
+  --kyron-space-4: 18px;
+  --kyron-space-5: 24px;
+  --kyron-space-6: 32px;
+  --kyron-text-xs: 11px;
+  --kyron-text-sm: 13px;
+  --kyron-text-md: 14px;
+  --kyron-text-lg: 18px;
+  --kyron-heading-md: 22px;
+  --kyron-heading-lg: 28px;
+}
+
+html {
+  font-size: 14px;
+}
+
+body {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.main-content {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  padding: 32px clamp(24px, 3.1vw, 48px);
+}
+
+.page-header {
+  gap: 18px;
+  margin-bottom: 26px;
+  padding-bottom: 16px;
+}
+
+.page-header h1 {
+  font-size: clamp(25px, 2vw, 29px);
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+}
+
+.eyebrow {
+  font-size: 10px;
+  margin-bottom: 6px;
+}
+
+.muted {
+  font-size: 13px;
+  line-height: 1.5;
+  margin-top: 6px;
+}
+
+.section {
+  margin-top: 28px;
+}
+
+.section-header {
+  gap: 14px;
+  margin-bottom: 14px;
+  padding-bottom: 9px;
+}
+
+.section-header h1,
+.section-header h2,
+.section > h1,
+.section > h2 {
+  font-size: var(--kyron-heading-md);
+  line-height: 1.25;
+}
+
+.stats-grid {
+  gap: 14px;
+  margin-bottom: 30px;
+}
+
+.stat-card {
+  min-height: 88px;
+  padding: 17px 18px;
+  border-radius: 8px !important;
+}
+
+.stat-card span {
+  font-size: 11px;
+  margin-bottom: 8px;
+}
+
+.stat-card strong {
+  font-size: 26px;
+  line-height: 1.1;
+}
+
+.dashboard-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.dashboard-grid > *,
+.section,
+.form-card,
+.athlete-card,
+.camp-card,
+.session-card,
+.competition-card {
+  min-width: 0;
+}
+
+.competition-list,
+.session-list {
+  gap: 10px;
+}
+
+.competition-card {
+  min-height: 82px;
+  padding: 13px 15px;
+  gap: 13px;
+  border-radius: 8px !important;
+}
+
+.date-box {
+  width: 48px;
+  min-width: 48px;
+  height: 54px;
+}
+
+.date-box strong {
+  font-size: 19px;
+}
+
+.competition-info h3,
+.session-main h3 {
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.competition-info p,
+.session-main p {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.organizer,
+.session-athletes {
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.competition-meta {
+  gap: 10px;
+}
+
+.status {
+  padding: 4px 8px;
+  font-size: 10px;
+}
+
+.detail-grid {
+  gap: 12px;
+}
+
+.detail-card {
+  padding: 15px 16px;
+  border-radius: 8px !important;
+}
+
+.detail-label {
+  font-size: 10px;
+  margin-bottom: 6px;
+}
+
+.detail-card strong {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.form-card {
+  padding: clamp(18px, 2vw, 24px);
+  margin-bottom: 20px;
+  border-radius: 8px !important;
+}
+
+.form-card h2 {
+  font-size: 18px;
+  margin-bottom: 16px;
+}
+
+.form-grid {
+  gap: 14px 16px;
+}
+
+.tracker-field,
+.form-field,
+.form-card label {
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.form-input,
+.search-input,
+.filter-select,
+select,
+input:not([type="checkbox"]):not([type="radio"]),
+textarea {
+  min-height: 42px;
+  font-size: 13px;
+  border-radius: 8px;
+}
+
+.form-input {
+  padding: 10px 12px;
+}
+
+textarea,
+textarea.form-input {
+  min-height: 96px;
+}
+
+.primary-button,
+.secondary-button,
+.back-button {
+  min-height: 38px;
+  padding: 9px 14px;
+  font-size: 12px;
+  border-radius: 7px;
+}
+
+.form-actions {
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.athlete-grid,
+.camp-grid {
+  gap: 14px;
+}
+
+.athlete-card,
+.camp-card {
+  padding: 17px;
+  border-radius: 8px !important;
+}
+
+.athlete-avatar {
+  width: 40px;
+  height: 40px;
+  font-size: 12px;
+}
+
+.athlete-card h3 {
+  margin-top: 13px;
+  font-size: 15px;
+}
+
+.athlete-category,
+.athlete-details span,
+.camp-dates {
+  font-size: 11px;
+}
+
+.athlete-details {
+  margin-top: 14px;
+  padding-top: 12px;
+}
+
+.athlete-details strong {
+  font-size: 12px;
+}
+
+.danger-button {
+  min-height: 34px;
+  margin-top: 14px;
+  font-size: 11px;
+}
+
+.session-card {
+  min-height: 72px;
+  padding: 13px 15px;
+  gap: 14px;
+  border-radius: 8px !important;
+}
+
+.session-time {
+  width: 48px;
+  min-width: 48px;
+  font-size: 12px;
+}
+
+.session-type {
+  padding: 3px 7px;
+  font-size: 9px;
+  margin-bottom: 5px;
+}
+
+.week-selector {
+  gap: 7px;
+  margin-bottom: 22px;
+}
+
+.day-button {
+  min-height: 64px;
+  padding: 9px 5px;
+  border-radius: 8px;
+}
+
+.day-button span {
+  font-size: 9px;
+}
+
+.day-button strong {
+  font-size: 17px;
+  margin-top: 3px;
+}
+
+.schedule-date {
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.athlete-performance-card {
+  padding: 19px 22px;
+  border-radius: 9px !important;
+}
+
+.athlete-performance-heading {
+  gap: 11px;
+  margin-bottom: 17px;
+}
+
+.athlete-performance-avatar {
+  width: 38px;
+  height: 38px;
+  flex-basis: 38px;
+}
+
+.athlete-performance-identity h3 {
+  font-size: 16px;
+}
+
+.athlete-performance-identity span,
+.athlete-performance-open {
+  font-size: 11px;
+}
+
+.athlete-performance-metrics {
+  gap: 13px;
+}
+
+.athlete-performance-row {
+  grid-template-columns: 90px minmax(0, 1fr) 42px;
+  gap: 12px;
+}
+
+.athlete-performance-label {
+  font-size: 12px;
+}
+
+.athlete-performance-track {
+  height: 10px;
+}
+
+.athlete-performance-value {
+  font-size: 11px;
+}
+
+.athlete-performance-list {
+  gap: 12px;
+}
+
+.athlete-workout-section {
+  margin-top: 22px;
+}
+
+.workout-history-header {
+  margin: 22px 0 12px;
+}
+
+.workout-history-header h3 {
+  font-size: 16px;
+}
+
+.workout-log-form {
+  padding: 18px;
+}
+
+.source-info {
+  margin-top: 22px;
+  padding: 12px 14px;
+  font-size: 11px;
+}
+
+/* Keep dashboard panels balanced on medium desktop widths. */
+@media (max-width: 1200px) {
+  .main-content {
+    padding: 28px 26px;
+  }
+
+  .dashboard-grid {
+    gap: 18px;
+  }
+
+  .athlete-grid,
+  .camp-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Tablet and phone sizing. */
+@media (max-width: 760px) {
+  .main-content {
+    padding: 22px 16px 30px;
+  }
+
+  .page-header {
+    gap: 12px;
+    margin-bottom: 21px;
+  }
+
+  .page-header h1 {
+    font-size: 24px;
+  }
+
+  .section {
+    margin-top: 24px;
+  }
+
+  .section-header h1,
+  .section-header h2,
+  .section > h1,
+  .section > h2 {
+    font-size: 19px;
+  }
+
+  .stats-grid {
+    gap: 9px;
+    margin-bottom: 23px;
+  }
+
+  .stat-card {
+    min-height: 78px;
+    padding: 13px !important;
+  }
+
+  .stat-card span {
+    font-size: 10px;
+    margin-bottom: 7px;
+  }
+
+  .stat-card strong {
+    font-size: 23px;
+  }
+
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .dashboard-grid .section {
+    margin-top: 0;
+  }
+
+  .form-card {
+    padding: 16px;
+  }
+
+  .form-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 12px;
+  }
+
+  .form-input,
+  .search-input,
+  .filter-select,
+  select,
+  input:not([type="checkbox"]):not([type="radio"]) {
+    min-height: 42px;
+    font-size: 13px;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .form-actions button {
+    width: 100%;
+    min-height: 42px;
+  }
+
+  .athlete-grid,
+  .camp-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .session-card {
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .session-time {
+    width: 42px;
+    min-width: 42px;
+    font-size: 11px;
+  }
+
+  .athlete-performance-card {
+    padding: 16px 14px;
+  }
+
+  .athlete-performance-row {
+    grid-template-columns: 76px minmax(0, 1fr) 36px;
+    gap: 8px;
+  }
+
+  .athlete-performance-label {
+    font-size: 11px;
+  }
+
+  .athlete-performance-value {
+    font-size: 10px;
+  }
+
+  .source-info {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 380px) {
+  .main-content {
+    padding-left: 11px;
+    padding-right: 11px;
+  }
+
+  .page-header h1 {
+    font-size: 22px;
+  }
+
+  .stat-card {
+    padding: 11px !important;
+  }
+
+  .stat-card strong {
+    font-size: 21px;
+  }
+
+  .athlete-performance-row {
+    grid-template-columns: 68px minmax(0, 1fr) 34px;
+    gap: 6px;
+  }
+}
