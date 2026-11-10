@@ -427,6 +427,7 @@ router.get("/assigned-workouts", requireIntegrationKey, (req, res) => {
 	if (!relationship?.athlete_id) {
 		return res.json({ workouts: [] });
 	}
+	const athleteId = relationship.athlete_id;
 
 	const rows = db
 		.prepare(
@@ -441,7 +442,12 @@ router.get("/assigned-workouts", requireIntegrationKey, (req, res) => {
 	const workouts = rows
 		.map((row) => {
 			try {
-				return JSON.parse(row.data_json);
+				const workout = JSON.parse(row.data_json);
+
+				return {
+					...workout,
+					athleteRpe: workout.efforts?.[athleteId] ?? workout.rpe ?? null,
+				};
 			} catch {
 				return null;
 			}
@@ -488,41 +494,37 @@ router.get("/coach-notes", requireIntegrationKey, (req, res) => {
 // ------------------------------------------------------
 router.post("/training-sessions/:sessionId/complete", (req, res) => {
 	const sessionId = String(req.params.sessionId || "");
-	const session = db
-		.prepare(
-			`SELECT id, data_json AS dataJson FROM training_sessions WHERE id = ?`,
-		)
-		.get(sessionId) as { id: string; dataJson: string } | undefined;
-	if (!session)
-		return res.status(404).json({ error: "Training session not found." });
+	const session = db.prepare(`SELECT id, data_json AS dataJson FROM training_sessions WHERE id = ?`).get(sessionId) as { id: string; dataJson: string } | undefined;
+	if (!session) return res.status(404).json({ error: "Training session not found." });
 
 	let workout: any;
-	try {
-		workout = JSON.parse(session.dataJson);
-	} catch {
-		return res
-			.status(500)
-			.json({ error: "Stored training session is invalid." });
+	try { workout = JSON.parse(session.dataJson); }
+	catch { return res.status(500).json({ error: "Stored training session is invalid." }); }
+
+	const athleteIds = (db.prepare(`SELECT athlete_id AS athleteId FROM session_athletes WHERE session_id = ?`).all(sessionId) as Array<{ athleteId: string }>).map((row) => row.athleteId);
+	const suppliedEfforts = req.body?.efforts;
+	if (!suppliedEfforts || typeof suppliedEfforts !== "object" || Array.isArray(suppliedEfforts)) {
+		return res.status(400).json({ error: "Individual athlete effort ratings are required." });
 	}
+	const efforts: Record<string, number> = {};
+	for (const athleteId of athleteIds) {
+		const value = Number(suppliedEfforts[athleteId]);
+		if (!Number.isInteger(value) || value < 1 || value > 10) {
+			return res.status(400).json({ error: `Provide an effort rating from 1 to 10 for every assigned athlete.` });
+		}
+		efforts[athleteId] = value;
+	}
+	if (!athleteIds.length) return res.status(400).json({ error: "This session has no assigned athletes." });
 
 	const alreadyCompleted = Boolean(workout.completed);
-	const completedAt =
-		typeof workout.completedAt === "string"
-			? workout.completedAt
-			: new Date().toISOString();
+	const completedAt = typeof workout.completedAt === "string" ? workout.completedAt : new Date().toISOString();
 	workout.completed = true;
 	workout.completedAt = completedAt;
+	workout.efforts = { ...(workout.efforts || {}), ...efforts };
+	workout.rpe = Number((Object.values(efforts).reduce((sum, value) => sum + value, 0) / athleteIds.length).toFixed(1));
 
-	db.prepare(
-		`UPDATE training_sessions SET completed = 1, data_json = ? WHERE id = ?`,
-	).run(JSON.stringify(workout), sessionId);
-
-	res.json({
-		success: true,
-		alreadyCompleted,
-		completedAt,
-		synced: "available-via-kyron-api",
-	});
+	db.prepare(`UPDATE training_sessions SET completed = 1, data_json = ? WHERE id = ?`).run(JSON.stringify(workout), sessionId);
+	res.json({ success: true, alreadyCompleted, completedAt, efforts, synced: "available-via-kyron-api" });
 });
 
 export default router;

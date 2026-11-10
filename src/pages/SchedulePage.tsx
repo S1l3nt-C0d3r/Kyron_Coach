@@ -7,7 +7,7 @@ type Props = {
   sessions: TrainingSession[];
   athletes: Athlete[];
   camps: Camp[];
-  onComplete: (id: string, efforts: Record<string, number>) => void;
+  onComplete: (id: string, efforts: Record<string, number>) => Promise<void> | void;
   onAddSession: (session: TrainingSession) => void;
 };
 
@@ -37,6 +37,8 @@ export default function SchedulePage({
   const [athleteIds, setAthleteIds] = useState<string[]>([]);
   const [campId, setCampId] = useState("");
   const [error, setError] = useState("");
+  const [completionBusy, setCompletionBusy] = useState(false);
+  const [completionError, setCompletionError] = useState("");
 
   const daySessions = sessions
     .filter((session) => session.date === selectedDate)
@@ -55,8 +57,25 @@ export default function SchedulePage({
   };
 
   const closeModal = () => {
+    if (completionBusy) return;
     setCompletingSession(null);
     setEfforts({});
+    setCompletionError("");
+  };
+
+  const confirmCompletion = async () => {
+    if (!completingSession || completionBusy) return;
+    setCompletionBusy(true);
+    setCompletionError("");
+    try {
+      await onComplete(completingSession.id, efforts);
+      setCompletingSession(null);
+      setEfforts({});
+    } catch (err) {
+      setCompletionError(err instanceof Error ? err.message : "Could not complete workout.");
+    } finally {
+      setCompletionBusy(false);
+    }
   };
 
   const saveSession = () => {
@@ -463,19 +482,13 @@ export default function SchedulePage({
               ))
             )}
 
+            {completionError && <p className="muted" role="alert">{completionError}</p>}
             <div className="form-actions">
-              <button className="secondary-button" onClick={closeModal}>
+              <button className="secondary-button" onClick={closeModal} disabled={completionBusy}>
                 Cancel
               </button>
-              <button
-                className="primary-button"
-                disabled={!assignedAthletes.length}
-                onClick={() => {
-                  onComplete(completingSession.id, efforts);
-                  closeModal();
-                }}
-              >
-                Confirm Completion
+              <button className="primary-button" disabled={!assignedAthletes.length || completionBusy} onClick={() => void confirmCompletion()}>
+                {completionBusy ? "Saving…" : "Confirm Completion"}
               </button>
             </div>
           </section>

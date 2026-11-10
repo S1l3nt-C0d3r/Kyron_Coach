@@ -15,10 +15,10 @@ type Props = {
 	sessions: TrainingSession[];
 	workoutLogs: WorkoutLog[];
 	onAddSession: (session: TrainingSession) => void;
+	onComplete: (id: string, efforts: Record<string, number>) => Promise<void> | void;
 	initialAthleteId?: string | null;
 };
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 const workoutCategories = [
 	"Technical",
@@ -37,6 +37,7 @@ export default function TrainingPage({
 	camps,
 	sessions,
 	onAddSession,
+	onComplete,
 	initialAthleteId,
 }: Props) {
 	const [showWorkoutForm, setShowWorkoutForm] = useState(false);
@@ -53,7 +54,8 @@ export default function TrainingPage({
 	const [notes, setNotes] = useState("");
 	const [campId, setCampId] = useState("");
 	const [error, setError] = useState("");
-	const [completedIds, setCompletedIds] = useState<string[]>([]);
+	const [completingSession, setCompletingSession] = useState<TrainingSession | null>(null);
+	const [efforts, setEfforts] = useState<Record<string, number>>({});
 	const [completingId, setCompletingId] = useState<string | null>(null);
 	const [completionError, setCompletionError] = useState("");
 
@@ -127,32 +129,23 @@ export default function TrainingPage({
 		resetForm();
 	};
 
-	const markSessionComplete = async (session: TrainingSession) => {
-		if (session.completed || completedIds.includes(session.id) || completingId)
-			return;
-		setCompletingId(session.id);
+	const markSessionComplete = async () => {
+		if (!completingSession || completingSession.completed || completingId) return;
+		setCompletingId(completingSession.id);
 		setCompletionError("");
 		try {
-			const response = await fetch(
-				`${API_URL}/api/integrations/training-sessions/${encodeURIComponent(session.id)}/complete`,
-				{ method: "POST" },
-			);
-			const payload = await response.json().catch(() => ({}));
-			if (!response.ok)
-				throw new Error(payload.error || "Could not mark workout complete.");
-			setCompletedIds((current) => [...current, session.id]);
-			if (payload.syncWarning) setCompletionError(payload.syncWarning);
-			else if (payload.failures?.length)
-				setCompletionError(
-					`Completed in Kyron, but Akiles sync failed for ${payload.failures.length} athlete(s). Check backend logs.`,
-				);
+			await onComplete(completingSession.id, efforts);
+			setCompletingSession(null);
+			setEfforts({});
 		} catch (err) {
-			setCompletionError(
-				err instanceof Error ? err.message : "Could not complete workout.",
-			);
-		} finally {
-			setCompletingId(null);
-		}
+			setCompletionError(err instanceof Error ? err.message : "Could not complete workout.");
+		} finally { setCompletingId(null); }
+	};
+
+	const openCompletionModal = (session: TrainingSession) => {
+		if (session.completed) return;
+		setEfforts(Object.fromEntries(session.athleteIds.map((id) => [id, 5])));
+		setCompletingSession(session);
 	};
 
 	const athleteName = (id: string) =>
@@ -460,16 +453,16 @@ export default function TrainingPage({
 								)}
 
 								<span>
-									{session.completed || completedIds.includes(session.id)
+									{session.completed
 										? "Completed"
 										: "Scheduled"}
 								</span>
-								{!session.completed && !completedIds.includes(session.id) && (
+								{!session.completed && (
 									<button
 										className="secondary-button"
 										type="button"
 										disabled={completingId !== null}
-										onClick={() => void markSessionComplete(session)}
+										onClick={() => openCompletionModal(session)}
 									>
 										{completingId === session.id
 											? "Completing…"
@@ -481,6 +474,18 @@ export default function TrainingPage({
 					</div>
 				)}
 			</section>
+
+			{completingSession && (
+				<div role="presentation" onClick={(event) => { if (event.target === event.currentTarget && !completingId) setCompletingSession(null); }} style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, background: "rgba(0,0,0,.82)", backdropFilter: "blur(8px)" }}>
+					<section role="dialog" aria-modal="true" aria-labelledby="training-completion-title" style={{ width: "100%", maxWidth: 560, maxHeight: "85vh", overflowY: "auto", background: "#141414", color: "#f4eddd", border: "1px solid #80632f", borderRadius: 16, padding: 26 }}>
+						<p className="eyebrow">SESSION REVIEW</p><h2 id="training-completion-title">Complete workout</h2>
+						<p className="muted">Record each athlete's effort for {completingSession.title}.</p>
+						{completingSession.athleteIds.map((id) => <div className="form-card" key={id}><label className="tracker-field">{athleteName(id)}: {efforts[id] ?? 5}/10 effort<input aria-label={`${athleteName(id)} effort rating`} type="range" min="1" max="10" step="1" value={efforts[id] ?? 5} onChange={(event) => setEfforts((current) => ({ ...current, [id]: Number(event.target.value) }))} style={{ width: "100%", accentColor: "#c8a45d" }} /></label></div>)}
+						{completionError && <p className="muted" role="alert">{completionError}</p>}
+						<div className="form-actions"><button className="secondary-button" disabled={!!completingId} onClick={() => setCompletingSession(null)}>Cancel</button><button className="primary-button" disabled={!completingSession.athleteIds.length || !!completingId} onClick={() => void markSessionComplete()}>{completingId ? "Saving…" : "Confirm Completion"}</button></div>
+					</section></div>
+			)}
+
 		</>
 	);
 }
